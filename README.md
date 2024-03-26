@@ -13,4 +13,5 @@ matrix:Vandermonde Matrix
 expand-key:
 $\tau^{i+1}=\pi^{i-1}\tau^{i}\pi^{i-1}$
 
-addkey:k[i]^=k[\tau[i]]
+addkey:
+$k[i]\oplus=k[\tau[i]]$
