@@ -6,9 +6,9 @@ MDS行列を使ってますがCauchy行列でもいいようです。
 
 # 設計指針
 S-box:
-$$x^3+123 \pmod 257$$  
+$x^3+123 \pmod 257$  
 
 matrix:Vandermonde Matrix  
 
 expand-key:
-$$k^{i+1}=\pi\tau^{i-1}\pi^i$$
+$k^{i+1}=\pi\tau^{i-1}\pi^i$
