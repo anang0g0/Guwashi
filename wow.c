@@ -52,7 +52,7 @@ uint16_t inv(uint16_t a, uint16_t n)
 	return ((x + n) % (n / d)) % n;
 }
 
-uint16_t voi(uint16_t a, uint16_t n)
+uint16_t cheki(uint16_t a, uint16_t n)
 {
 	int i;
 
@@ -261,40 +261,6 @@ void perm(uint8_t *m, uint8_t *r)
 	memcpy(m, u, 32);
 }
 
-void sche(uint8_t *o)
-{
-	for (int i = 0; i < 32; i++)
-		o[i] ^= o[r[i]];
-}
-
-void euc(uint8_t *m, uint8_t *k)
-{
-	int i;
-	uint8_t s[16], tmp[16];
-
-	for (i = 0; i < 16; i++)
-	{
-		tmp[i] = m[i];
-		s[i] = s_box[m[i] ^ k[i]] ^ m[i + 16];
-		m[i + 16] = tmp[i];
-		m[i] = s[i];
-	}
-}
-
-void uec(uint8_t *m, uint8_t *k)
-{
-	int i;
-	uint8_t tmp[16], u[32] = {0};
-
-	for (i = 0; i < 16; i++)
-	{
-		tmp[i] = m[i];
-		m[i] ^= s_box[m[i + 16]];
-		u[i + 16] = m[i];
-		m[i] = inv_s_box[tmp[i] ^ u[i + 16]];
-		m[i + 16] = u[i + 16];
-	}
-}
 
 unsigned char mkbox(unsigned char x)
 {
@@ -399,18 +365,18 @@ int mltn(int n, int x)
 	return ret;
 }
 
-void van(int kk)
+void mds(int kk)
 {
 	int i, j;
 
 	printf("van der\n");
 
-	for (i = 0; i < 5; i++)
+	for (i = 2; i < 5; i++)
 		vb[0][i] = 1;
 	// #pragma omp parallel for private(i, j)
 	for (i = 1; i < 6; i++)
 	{
-		for (j = 0; j < 6; j++)
+		for (j = 2; j < 6; j++)
 		{
 			vb[i][j] = gf[mltn(i, fg[j])];
 			printf("%d,", vb[i][j]);
@@ -420,10 +386,6 @@ void van(int kk)
 }
 
 uint8_t der[4][4] = {
-	//{11,11,11,11},
-	//{12,12,12,12},
-	//{13,13,13,13},
-	//{14,14,14,14}
 	{2, 3, 4, 5},
 	{4, 5, 16, 17},
 	{8, 15, 64, 85},
@@ -438,11 +400,6 @@ uint8_t snoot[4][4] = {
 	{210, 233, 192, 64},
 	{26, 80, 192, 48},
 	{58, 139, 192, 203}
-
-	//{166,150,122,75},
-	//{244,110,122,224},
-	//{78,244,122,192},
-	//{32,219,0,251}
 };
 
 void matmax(uint8_t g[4][4], uint8_t h[4][8], uint8_t c[4][8])
@@ -560,18 +517,6 @@ void m2l(uint8_t mm[4][8], uint8_t m[32])
 	}
 }
 
-void shigt(uint8_t m[4][8])
-{
-	int i, j;
-
-	for (i = 1; i < 4; i++)
-	{
-		// uint8_t tmp = m[i][i * 2 - 2];
-		// uint8_t tmp2 = m[i][i * 2 - 1];
-		for (j = 0; j < 8; j++)
-			m[i][j] = m[i][j + 2];
-	}
-}
 
 void milk(uint8_t vc[8][8])
 {
@@ -616,6 +561,9 @@ int main()
 	uint8_t out[32]; //, mo[256], inv_mo[256];
 	uint8_t mm[4][8] = {0}, con[8][8] = {0};
 	// uint8_t l21[8][8] = {0}, s21[8][8] = {0};
+
+	mds(4);
+	//exit(1);
 
 	random_shuffle(p, 32);
 	random_shuffle(r, 32);
