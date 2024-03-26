@@ -8,7 +8,7 @@ MDS行列を使ってますがCauchy行列でもいいようです。
 S-box:
 $x^3+123 \pmod {257}$  
 
-matrix:Vandermonde Matrix  
+matrix:Vandermonde Matrix over GF(256)
 
 expand-key:
 $\tau^{i+1}=\pi^{i-1}\tau^{i}\pi^{i-1}$
