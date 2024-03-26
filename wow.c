@@ -580,6 +580,7 @@ int enc(uint8_t *k, uint8_t *m, uint8_t *ss)
 	// milk(der);
 	//  exit(1);
 	// milk(der);
+	
 	for (i = 0; i < 10; i++)
 	{
 		for (int l = 0; l < 32; l++)
