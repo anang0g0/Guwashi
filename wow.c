@@ -6,7 +6,7 @@
 #include <immintrin.h>
 #include <time.h>
 
-unsigned char p[32], q[32], r[32], inv_r[32], inv_p[32], kkk[32] = {0};
+unsigned char p[32], q[32], r[32], inv_r[32], inv_p[32], kkk[32] = {0},out[32];
 
 // x^7+c
 static const uint8_t s_box[256] = {198, 199, 70, 57, 92, 213, 163, 101, 243, 107, 133, 248, 150, 155, 108, 181, 3, 216, 45, 145, 16, 53, 244, 135, 83, 192, 137, 230, 128, 240, 99, 222, 167, 22, 95, 59, 77, 30, 254, 73, 228, 161, 249, 242, 174, 20, 11, 206, 50, 55, 235, 34, 74, 219, 109, 1, 166, 134, 152, 239, 65, 232, 114, 189, 160, 97, 201, 149, 104, 229, 184, 153, 171, 113, 165, 121, 217, 82, 157, 33, 118, 39, 141, 88, 116, 31, 131, 93, 76, 215, 210, 86, 203, 119, 170, 56, 84, 245, 226, 117, 183, 48, 140, 12, 6, 209, 196, 190, 0, 236, 188, 204, 32, 127, 139, 251, 18, 29, 129, 144, 241, 9, 44, 96, 25, 172, 15, 63, 13, 225, 90, 194, 7, 125, 200, 247, 182, 193, 246, 110, 185, 69, 146, 176, 250, 75, 130, 94, 187, 234, 238, 227, 223, 36, 178, 191, 164, 162, 23, 214, 47, 173, 58, 103, 124, 2, 197, 85, 52, 64, 37, 21, 61, 168, 115, 147, 43, 154, 158, 233, 40, 19, 132, 72, 28, 138, 175, 100, 122, 123, 35, 78, 159, 156, 46, 186, 91, 10, 180, 67, 120, 98, 79, 89, 252, 169, 102, 14, 17, 5, 179, 41, 221, 237, 148, 27, 60, 224, 26, 211, 143, 106, 177, 112, 151, 42, 195, 66, 81, 212, 111, 231, 255, 54, 62, 80, 38, 202, 126, 4, 24, 220, 208, 49, 205, 71, 218, 68, 8, 105, 87, 136, 253, 207, 142, 51};
@@ -384,7 +384,8 @@ void mds(int kk)
 	}
 }
 
-uint8_t der[4][4] = {
+uint8_t der[4][4] = {0};
+/*
 	{2, 3, 4, 5},
 	{4, 5, 16, 17},
 	{8, 15, 64, 85},
@@ -393,12 +394,14 @@ uint8_t der[4][4] = {
 //{1,4,5,16},
 //{1,8,15,64},
 //{1,16,17,29}
-
-uint8_t snoot[4][4] = {
+*/
+uint8_t snoot[4][4] = {0};
+	/*
 	{104, 115, 192, 96},
 	{210, 233, 192, 64},
 	{26, 80, 192, 48},
 	{58, 139, 192, 203}};
+	*/
 
 void matmax(uint8_t g[4][4], uint8_t h[4][8], uint8_t c[4][8])
 {
@@ -445,7 +448,7 @@ int oinv(unsigned short b)
 	return (256 - fg[b]) % (256 - 1) + 1;
 }
 
-#define MATRIX_SIZE 8
+#define MATRIX_SIZE 4
 // 行列の逆行列を計算する関数
 void inverseMatrix(uint8_t A[MATRIX_SIZE][MATRIX_SIZE], uint8_t A_inv[MATRIX_SIZE][MATRIX_SIZE])
 {
@@ -515,17 +518,19 @@ void m2l(uint8_t mm[4][8], uint8_t m[32])
 	}
 }
 
-void milk(uint8_t vc[8][8])
+void milk(uint8_t vc[4][4])
 {
 	// uint16_t cx[8][8]={0};
 	uint8_t i, j, k = 0, l = 0;
 
-	for (i = 3; i < 18; i = i + 2)
+	for (i = 3; i < 10; i = i + 2)
 	{
-		for (j = 2; j < 17; j = j + 2)
+		l=0;
+		for (j = 2; j < 9; j = j + 2)
 		{
-			vc[k][l++] = oinv((256 + i - j) % 256);
-			printf("v%d,", vc[i][j]);
+			vc[k][l] = oinv((256 + i - j) % 256);
+			printf("v%d,", vc[k][l]);
+			l++;
 		}
 		l = 0;
 		k++;
@@ -540,6 +545,10 @@ void dec(uint8_t *m, uint8_t *k, uint8_t *inv_ss)
 {
 	int i, l;
 	uint8_t mm[4][8], con[4][8];
+
+	milk(der);
+	inverseMatrix(der,snoot);
+	memcpy(r, out, 32);
 	for (i = 0; i < 16; i++)
 		rounder();
 
@@ -574,20 +583,14 @@ void dec(uint8_t *m, uint8_t *k, uint8_t *inv_ss)
 	printf("\n");
 }
 
-int enc(uint8_t *k, uint8_t *m, uint8_t *out, uint8_t *ss)
+int enc(uint8_t *k, uint8_t *m, uint8_t *ss)
 {
 
 	int i, j;
 	uint8_t mm[4][8], con[4][8];
-	for (i = 0; i < 16; i++)
-	{
-		for (int j = 0; j < 32; j++)
-			k[j] ^= rotl(k[r[j]], 3);
-		rounder();
-		for (int j = 0; j < 32; j++)
-			table[i][j] = k[j];
-	}
+
 	memcpy(r, out, 32);
+	milk(der);
 	// exit(1);
 
 	for (i = 0; i < 16; i++)
@@ -629,13 +632,13 @@ void main()
 	for (i = 0; i < 32; i++)
 	{
 		m[i] = 0; // 255-i;
-		printf("%d,", nonce[i]);
+		//printf("%d,", nonce[i]);
 		k[i] = 0; // random() % 256;
 		k[i] ^= nonce[i];
 		p[i] = i;
 		r[i] = i;
 	}
-	uint8_t out[32]; //, mo[256], inv_mo[256];
+	//uint8_t out[32]; //, mo[256], inv_mo[256];
 	uint8_t mm[4][8] = {0}, con[8][8] = {0};
 
 	// mds(4);
@@ -656,13 +659,21 @@ void main()
 		printf("%02x ", m[i]);
 	}
 	printf("\n");
+	
 	uint8_t ss[256], inv_ss[256];
 	for (i = 0; i < 256; i++)
 		ss[i] = mkbox(i);
 	for (i = 0; i < 256; i++)
 		inv_ss[ss[i]] = i;
-
-	enc(k, m, out, ss);
-	memcpy(r, out, 32);
+	//memcpy(r,out,32);
+	for (i = 0; i < 16; i++)
+	{
+		for (int j = 0; j < 32; j++)
+			k[j] ^= rotl(k[r[j]], 3);
+		rounder();
+		for (int j = 0; j < 32; j++)
+			table[i][j] = k[j];
+	}
+	enc(k, m, ss);
 	dec(m, k, inv_ss);
 }
