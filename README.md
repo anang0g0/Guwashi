@@ -11,6 +11,6 @@ $x^3+123 \pmod {257}$
 matrix:Vandermonde Matrix  
 
 expand-key:
-$\tau^{i+1}=\pi\tau^{i-1}\pi^i$
+$\tau^{i+1}=\pi^{i-1}\tau^{i}\pi^{i-1}$
 
 addkey:k[i]^=k[\tau[i]]
