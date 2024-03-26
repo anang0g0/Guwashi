@@ -261,7 +261,6 @@ void perm(uint8_t *m, uint8_t *r)
 	memcpy(m, u, 32);
 }
 
-
 unsigned char mkbox(unsigned char x)
 {
 	// GF(256)
@@ -399,8 +398,7 @@ uint8_t snoot[4][4] = {
 	{104, 115, 192, 96},
 	{210, 233, 192, 64},
 	{26, 80, 192, 48},
-	{58, 139, 192, 203}
-};
+	{58, 139, 192, 203}};
 
 void matmax(uint8_t g[4][4], uint8_t h[4][8], uint8_t c[4][8])
 {
@@ -517,7 +515,6 @@ void m2l(uint8_t mm[4][8], uint8_t m[32])
 	}
 }
 
-
 void milk(uint8_t vc[8][8])
 {
 	// uint16_t cx[8][8]={0};
@@ -538,98 +535,11 @@ void milk(uint8_t vc[8][8])
 	// exit(1);
 }
 
-int main()
+uint8_t table[16][32];
+void dec(uint8_t *m, uint8_t *k, uint8_t *inv_ss)
 {
-	unsigned short i;
-	unsigned char m[32];
-	unsigned char k[32] = {0};
-	// unsigned tt[256], inv_tt[256];
-	//  unsigned char p[32],inv_p[32];
-	unsigned char s[32], nonce[32] = {103, 198, 105, 115, 81, 255, 74, 236, 41, 205, 186, 171, 242, 251, 227, 70, 124, 194, 84, 248, 27, 232, 231, 141, 118, 90, 46, 99, 51, 159, 201, 154};
-
-	for (i = 0; i < 32; i++)
-	{
-		m[i] = 0; // 255-i;
-		printf("%d,", nonce[i]);
-		k[i] = 0; // random() % 256;
-		k[i] ^= nonce[i];
-		p[i] = i;
-		r[i] = i;
-	}
-	// printf("\n");
-	// uint8_t *w; // expanded key
-	uint8_t out[32]; //, mo[256], inv_mo[256];
-	uint8_t mm[4][8] = {0}, con[8][8] = {0};
-	// uint8_t l21[8][8] = {0}, s21[8][8] = {0};
-
-	mds(4);
-	//exit(1);
-
-	random_shuffle(p, 32);
-	random_shuffle(r, 32);
-	memcpy(s, r, 32);
-	for (i = 0; i < 32; i++)
-	{
-		inv_p[p[i]] = i;
-		inv_r[r[i]] = i;
-	}
-	memcpy(out, r, 32);
-	printf("\n");
-	printf("Plaintext message:\n");
-	for (i = 0; i < 32; i++)
-	{
-		printf("%02x ", m[i]);
-	}
-	printf("\n");
-	uint8_t table[16][32];
-
-	for (i = 0; i < 16; i++)
-	{
-		for (int j = 0; j < 32; j++)
-			k[j] ^= rotl(k[r[j]], 3);
-		rounder();
-		for (int j = 0; j < 32; j++)
-			table[i][j] = k[j];
-	}
-	memcpy(r, out, 32);
-	uint8_t ss[256], inv_ss[256];
-	for (i = 0; i < 256; i++)
-		ss[i] = mkbox(i);
-	for (i = 0; i < 256; i++)
-		inv_ss[ss[i]] = i;
-	// exit(1);
-
-	for (i = 0; i < 16; i++)
-	{
-		for (int l = 0; l < 32; l++)
-		{
-			// printf("%d ",k[l]);
-			// w[l]^=w[r[l]];
-			k[l] = table[i][l];
-		}
-		// printf("\n");
-		rounder();
-		add(m, k);
-		for (int l = 0; l < 32; l++)
-		{
-			if (l % 2 == 0)
-				m[l] = ss[m[l]]; // s_box[m[l]];
-		}
-		shift_rows(m);
-		l2m(m, mm);
-		matmax(der, mm, con);
-		m2l(con, m);
-		perm(m, r);
-	}
-
-	printf("Ciphered message:\n");
-	for (i = 0; i < 32; i++)
-	{
-		printf("%02x ", m[i]);
-	}
-	printf("\n");
-
-	memcpy(r, out, 32);
+	int i, l;
+	uint8_t mm[4][8], con[4][8];
 	for (i = 0; i < 16; i++)
 		rounder();
 
@@ -662,4 +572,97 @@ int main()
 		printf("%02x ", inv_s_box[s_box[m[i]]]);
 	}
 	printf("\n");
+}
+
+int enc(uint8_t *k, uint8_t *m, uint8_t *out, uint8_t *ss)
+{
+
+	int i, j;
+	uint8_t mm[4][8], con[4][8];
+	for (i = 0; i < 16; i++)
+	{
+		for (int j = 0; j < 32; j++)
+			k[j] ^= rotl(k[r[j]], 3);
+		rounder();
+		for (int j = 0; j < 32; j++)
+			table[i][j] = k[j];
+	}
+	memcpy(r, out, 32);
+	// exit(1);
+
+	for (i = 0; i < 16; i++)
+	{
+		for (int l = 0; l < 32; l++)
+		{
+			k[l] = table[i][l];
+		}
+		// printf("\n");
+		rounder();
+		add(m, k);
+		for (int l = 0; l < 32; l++)
+		{
+			if (l % 2 == 0)
+				m[l] = ss[m[l]]; // s_box[m[l]];
+		}
+		shift_rows(m);
+		l2m(m, mm);
+		matmax(der, mm, con);
+		m2l(con, m);
+		perm(m, r);
+	}
+
+	printf("Ciphered message:\n");
+	for (i = 0; i < 32; i++)
+	{
+		printf("%02x ", m[i]);
+	}
+	printf("\n");
+}
+
+void main()
+{
+	unsigned short i;
+	unsigned char m[32];
+	unsigned char k[32] = {0};
+	unsigned char s[32], nonce[32] = {103, 198, 105, 115, 81, 255, 74, 236, 41, 205, 186, 171, 242, 251, 227, 70, 124, 194, 84, 248, 27, 232, 231, 141, 118, 90, 46, 99, 51, 159, 201, 154};
+
+	for (i = 0; i < 32; i++)
+	{
+		m[i] = 0; // 255-i;
+		printf("%d,", nonce[i]);
+		k[i] = 0; // random() % 256;
+		k[i] ^= nonce[i];
+		p[i] = i;
+		r[i] = i;
+	}
+	uint8_t out[32]; //, mo[256], inv_mo[256];
+	uint8_t mm[4][8] = {0}, con[8][8] = {0};
+
+	// mds(4);
+	// exit(1);
+	random_shuffle(p, 32);
+	random_shuffle(r, 32);
+	memcpy(s, r, 32);
+	for (i = 0; i < 32; i++)
+	{
+		inv_p[p[i]] = i;
+		inv_r[r[i]] = i;
+	}
+	memcpy(out, r, 32);
+	printf("\n");
+	printf("Plaintext message:\n");
+	for (i = 0; i < 32; i++)
+	{
+		printf("%02x ", m[i]);
+	}
+	printf("\n");
+	uint8_t ss[256], inv_ss[256];
+	for (i = 0; i < 256; i++)
+		ss[i] = mkbox(i);
+	for (i = 0; i < 256; i++)
+		inv_ss[ss[i]] = i;
+
+	enc(k, m, out, ss);
+	memcpy(r, out, 32);
+	dec(m, k, inv_ss);
 }
