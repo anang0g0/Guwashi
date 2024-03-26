@@ -87,14 +87,14 @@ void table(unsigned char a[EN])
 		t[0][i] = v[i];
 		t[1][i] = v[a[i]];
 		w[i] = prm[0][i];
-		//s[i] = prm[1][i];
-		//m[i] = prm[2][i];
-		// printf("v=%d,",w[i]);
+		// s[i] = prm[1][i];
+		// m[i] = prm[2][i];
+		//  printf("v=%d,",w[i]);
 	}
 	printf("\n");
 	//        exit(1);
 
-	for (count=2; count < 256;count++)
+	for (count = 2; count < 256; count++)
 	{
 
 		for (i = 0; i < N; i++)
@@ -116,7 +116,7 @@ void mkcycle()
 {
 
 	unsigned char p[EN], q[EN] = {0};
-	//unsigned char pp[4][MAX] = {0}; //{2, 7, 23, 0};
+	// unsigned char pp[4][MAX] = {0}; //{2, 7, 23, 0};
 
 	int cnt = cycle(4, MAX);
 	printf("%d\n", cnt);
@@ -186,10 +186,10 @@ int main()
 
 	srand(clock());
 	mkcycle();
-	//nike(1);
-	//for (int i = 0; i < EN; i++)
+	// nike(1);
+	// for (int i = 0; i < EN; i++)
 	//	o[i] = prm[1][i];
-	//table(o);
+	// table(o);
 
 	return 0;
 }
