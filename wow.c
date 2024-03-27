@@ -543,26 +543,29 @@ void dec(uint8_t *m, uint8_t *k, uint8_t *inv_ss)
 	for (i = 0; i < 10; i++)
 	{
 		// printf("\n");
+		for(l=0;l<16;l++)
+		m[l]^=m[l+16];
 		perm(m, inv_r);
-		matmax(snoot, m, con);
-		//inv_shift_rows(con);
+		//matmax(snoot, m, con);
+		memcpy(con,m,32);
+		inv_shift_rows(con);
 		for (int l = 0; l < 32; l++)
 		{
 			//if (l % 2 == 0)
-				con[l] = inv_ss[con[l]]; // inv_s_box[m[l]];
+				con[l] = inv_ss[rotl(con[l],3)]; // inv_s_box[m[l]];
 		}
 		sub(con, table[9-i]);
 		memcpy(m,con,32);
 		reverse();
 	}
-	
+	/*
 	printf("Original message (after inv cipher):\n");
 	for (i = 0; i < 32; i++)
 	{
 		printf("%02x ", inv_s_box[s_box[m[i]]]);
 	}
 	printf("\n");
-	
+	*/
 }
 
 int enc(uint8_t *k, uint8_t *m, uint8_t *ss)
@@ -582,22 +585,23 @@ int enc(uint8_t *k, uint8_t *m, uint8_t *ss)
 		for (int l = 0; l < 32; l++)
 		{
 			//if (l % 2 == 0)
-				m[l] = ss[m[l]]; // s_box[m[l]];
+				m[l] = rotl(ss[m[l]],-3); // s_box[m[l]];
 		}
-		//shift_rows(m);
-		matmax(der, m, con);
-		perm(con, r);
-		
-		memcpy(m,con,32);
+		shift_rows(m);
+		//matmax(der, m, con);
+		perm(m, r);
+		for(j=0;j<16;j++)
+		m[j]^=m[j+16];
+		//memcpy(m,con,32);
 	}
-	
+	/*
 	printf("Ciphered message:\n");
 	for (i = 0; i < 32; i++)
 	{
 		printf("%02x ", m[i]);
 	}
 	printf("\n");
-	
+	*/
 }
 
 void main()
