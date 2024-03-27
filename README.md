@@ -15,4 +15,4 @@ expand-key:2つの置換の共役を取り、鍵自身にGF(2)上の演算をし
 $\tau^{i+1}=\pi^{i-1}\tau^{i}\pi^{i-1}、k[i]\oplus=k[\tau[i]]$
 
 addkey:加法
-m[i]+=key[i]
+$m[i]+=key[i]$
