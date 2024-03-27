@@ -175,23 +175,22 @@ int mlt(int x, int y)
 	return ((x + y - 2) % (256 - 1)) + 1;
 }
 
-uint8_t der[4][4] ={
-
-	{2, 3, 4, 5},
-	{4, 5, 16, 17},
-	{8, 15, 64, 85},
-	{16, 17, 29, 28}
+uint8_t der[16] ={
+	2, 3, 4, 5,
+	4, 5, 16, 17,
+	8, 15, 64, 85,
+	16, 17, 29, 28
 	};
 //{1,2,3,4},
 //{1,4,5,16},
 //{1,8,15,64},
 //{1,16,17,29}
 
-uint8_t snoot[4][4] = {
-	{104, 115, 192, 96},
-	{210, 233, 192, 64},
-	{26, 80, 192, 48},
-	{58, 139, 192, 203}};
+uint8_t snoot[16] = {
+	104, 115, 192, 96,
+	210, 233, 192, 64,
+	26, 80, 192, 48,
+	58, 139, 192, 203};
 	
 
 /*
@@ -428,7 +427,7 @@ for (i = 0; i < 4; i++){
 }
 }
 
-void matmax(uint8_t g[4][4], uint8_t *h, uint8_t *c)
+void matmax(uint8_t *g, uint8_t *h, uint8_t *c)
 {
 	int i, j, k;
 	// GH=0であることの確認。
@@ -437,8 +436,9 @@ void matmax(uint8_t g[4][4], uint8_t *h, uint8_t *c)
 		for (j = 0; j < 8; j++)
 		{
 			c[i*8+j] = 0;
-			for (k = 0; k < 4; k++)
-				c[i*8+j] ^= gf[mlt(fg[g[i][k]], fg[h[k*8+j]])];
+			for (k = 0; k < 4; k++){
+				c[i*8+j] ^= gf[mlt(fg[g[i*4+k]], fg[h[k*8+j]])];
+				}
 			// printf("c%d,", c[i][j]);
 		}
 		// printf("\n");
@@ -536,38 +536,33 @@ void dec(uint8_t *m, uint8_t *k, uint8_t *inv_ss)
 	//milk(der);
 	//inverseMatrix(der,snoot);
 	memcpy(r, out, 32);
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < 10; i++)
 		rounder();
 
 	// aes_inv_cipher(out, m, w);
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < 10; i++)
 	{
-		for (int l = 0; l < 32; l++)
-		{
-			// printf("%d ",k[l]);
-			k[l] = table[15 - i][l];
-		}
 		// printf("\n");
 		perm(m, inv_r);
 		matmax(snoot, m, con);
 		//inv_shift_rows(con);
 		for (int l = 0; l < 32; l++)
 		{
-			if (l % 2 == 0)
+			//if (l % 2 == 0)
 				con[l] = inv_ss[con[l]]; // inv_s_box[m[l]];
 		}
-		sub(con, k);
+		sub(con, table[9-i]);
 		memcpy(m,con,32);
 		reverse();
 	}
-	/*
+	
 	printf("Original message (after inv cipher):\n");
 	for (i = 0; i < 32; i++)
 	{
 		printf("%02x ", inv_s_box[s_box[m[i]]]);
 	}
 	printf("\n");
-	*/
+	
 }
 
 int enc(uint8_t *k, uint8_t *m, uint8_t *ss)
@@ -579,19 +574,14 @@ int enc(uint8_t *k, uint8_t *m, uint8_t *ss)
 	memcpy(r, out, 32);
 	//milk(der);
 	// exit(1);
-	//milk(der);
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < 10; i++)
 	{
-		for (int l = 0; l < 32; l++)
-		{
-			k[l] = table[i][l];
-		}
 		// printf("\n");
 		rounder();
-		add(m, k);
+		add(m, table[i]);
 		for (int l = 0; l < 32; l++)
 		{
-			if (l % 2 == 0)
+			//if (l % 2 == 0)
 				m[l] = ss[m[l]]; // s_box[m[l]];
 		}
 		//shift_rows(m);
@@ -600,14 +590,14 @@ int enc(uint8_t *k, uint8_t *m, uint8_t *ss)
 		
 		memcpy(m,con,32);
 	}
-	/*
+	
 	printf("Ciphered message:\n");
 	for (i = 0; i < 32; i++)
 	{
 		printf("%02x ", m[i]);
 	}
 	printf("\n");
-	*/
+	
 }
 
 void main()
