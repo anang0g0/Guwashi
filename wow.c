@@ -7,6 +7,7 @@
 #include <time.h>
 
 unsigned char p[32], q[32], r[32], inv_r[32], inv_p[32], kkk[32] = {0},out[32];
+unsigned data[8];
 
 // x^7+c
 static const uint8_t s_box[256] = {198, 199, 70, 57, 92, 213, 163, 101, 243, 107, 133, 248, 150, 155, 108, 181, 3, 216, 45, 145, 16, 53, 244, 135, 83, 192, 137, 230, 128, 240, 99, 222, 167, 22, 95, 59, 77, 30, 254, 73, 228, 161, 249, 242, 174, 20, 11, 206, 50, 55, 235, 34, 74, 219, 109, 1, 166, 134, 152, 239, 65, 232, 114, 189, 160, 97, 201, 149, 104, 229, 184, 153, 171, 113, 165, 121, 217, 82, 157, 33, 118, 39, 141, 88, 116, 31, 131, 93, 76, 215, 210, 86, 203, 119, 170, 56, 84, 245, 226, 117, 183, 48, 140, 12, 6, 209, 196, 190, 0, 236, 188, 204, 32, 127, 139, 251, 18, 29, 129, 144, 241, 9, 44, 96, 25, 172, 15, 63, 13, 225, 90, 194, 7, 125, 200, 247, 182, 193, 246, 110, 185, 69, 146, 176, 250, 75, 130, 94, 187, 234, 238, 227, 223, 36, 178, 191, 164, 162, 23, 214, 47, 173, 58, 103, 124, 2, 197, 85, 52, 64, 37, 21, 61, 168, 115, 147, 43, 154, 158, 233, 40, 19, 132, 72, 28, 138, 175, 100, 122, 123, 35, 78, 159, 156, 46, 186, 91, 10, 180, 67, 120, 98, 79, 89, 252, 169, 102, 14, 17, 5, 179, 41, 221, 237, 148, 27, 60, 224, 26, 211, 143, 106, 177, 112, 151, 42, 195, 66, 81, 212, 111, 231, 255, 54, 62, 80, 38, 202, 126, 4, 24, 220, 208, 49, 205, 71, 218, 68, 8, 105, 87, 136, 253, 207, 142, 51};
@@ -116,6 +117,7 @@ void ha(__uint128_t a, __uint128_t b)
 	}
 }
 
+
 uint8_t rotl(uint8_t x, uint8_t r)
 {
 	if (r == 0)
@@ -205,6 +207,129 @@ void coef_mult(uint8_t *a, uint8_t *b, uint8_t *d) {
 	d[3] = gmult(a[3],b[0])^gmult(a[3],b[1])^gmult(a[3],b[2])^gmult(a[3],b[3]);
 }
 
+/*
+ * Transformation in the Cipher that takes all of the columns of the 
+ * State and mixes their data (independently of one another) to 
+ * produce new columns.
+ */
+void mix_columns(uint8_t *state) {
+
+	uint8_t a[] = {0x02, 0x01, 0x01, 0x03}; // a(x) = {02} + {01}x + {01}x2 + {03}x3
+	uint8_t i, j, col[4], res[4];
+
+	for (j = 0; j < 8; j++) {
+		for (i = 0; i < 4; i++) {
+			col[i] = state[8*i+j];
+		}
+
+		coef_mult(a, col, res);
+
+		for (i = 0; i < 4; i++) {
+			state[8*i+j] = res[i];
+		}
+	}
+}
+
+/************************************************************/
+/* FIPS 197 P.10 4.2 乗算 (n倍) */
+int mul(int dt,int n)
+{
+  int i,x=0;
+  for(i=8;i>0;i>>=1)
+  {
+    x <<= 1;
+    if(x&0x100)
+      x = (x ^ 0x1b) & 0xff;
+    if((n & i))
+      x ^= dt;
+  }
+  return(x);
+}
+
+/************************************************************/
+int dataget(void* data,int n)
+{
+  return(((unsigned char*)data)[n]);
+}
+
+/************************************************************/
+/* FIPS 197  P.18 Figure 9 */
+void MixColumns(int data[])
+{
+  int i,i4,x;
+  for(i=0;i<8;i++)
+  {
+    i4 = i*4;
+    x  =  mul(dataget(data,i4+0),2) ^
+          mul(dataget(data,i4+1),3) ^
+          mul(dataget(data,i4+2),1) ^
+          mul(dataget(data,i4+3),1);
+    x |= (mul(dataget(data,i4+1),2) ^
+          mul(dataget(data,i4+2),3) ^
+          mul(dataget(data,i4+3),1) ^
+          mul(dataget(data,i4+0),1)) << 8;
+    x |= (mul(dataget(data,i4+2),2) ^
+          mul(dataget(data,i4+3),3) ^
+          mul(dataget(data,i4+0),1) ^
+          mul(dataget(data,i4+1),1)) << 16;
+    x |= (mul(dataget(data,i4+3),2) ^
+          mul(dataget(data,i4+0),3) ^
+          mul(dataget(data,i4+1),1) ^
+          mul(dataget(data,i4+2),1)) << 24;
+    data[i] = x;
+  } 
+}
+
+/************************************************************/
+/* FIPS 197  P.23 5.3.3 */
+void invMixColumns(int data[])
+{
+  int i,i4,x;
+  for(i=0;i<8;i++)
+  {
+    i4 = i*4;
+    x  =  mul(dataget(data,i4+0),14) ^
+          mul(dataget(data,i4+1),11) ^
+          mul(dataget(data,i4+2),13) ^
+          mul(dataget(data,i4+3), 9);
+    x |= (mul(dataget(data,i4+1),14) ^
+          mul(dataget(data,i4+2),11) ^
+          mul(dataget(data,i4+3),13) ^
+          mul(dataget(data,i4+0), 9)) << 8;
+    x |= (mul(dataget(data,i4+2),14) ^
+          mul(dataget(data,i4+3),11) ^
+          mul(dataget(data,i4+0),13) ^
+          mul(dataget(data,i4+1), 9)) << 16;
+    x |= (mul(dataget(data,i4+3),14) ^
+          mul(dataget(data,i4+0),11) ^
+          mul(dataget(data,i4+1),13) ^
+          mul(dataget(data,i4+2), 9)) << 24;
+    data[i] = x;
+  } 
+}
+
+
+/*
+ * Transformation in the Inverse Cipher that is the inverse of 
+ * MixColumns().
+ */
+void inv_mix_columns(uint8_t *state) {
+
+	uint8_t a[] = {0x0e, 0x09, 0x0d, 0x0b}; // a(x) = {0e} + {09}x + {0d}x2 + {0b}x3
+	uint8_t i, j, col[4], res[4];
+
+	for (j = 0; j < 8; j++) {
+		for (i = 0; i < 4; i++) {
+			col[i] = state[8*i+j];
+		}
+
+		coef_mult(a, col, res);
+
+		for (i = 0; i < 4; i++) {
+			state[8*i+j] = res[i];
+		}
+	}
+}
 
 /*
  * Transformation in the Cipher that processes the State by cyclically
@@ -262,9 +387,11 @@ void inv_shift_rows(uint8_t *state)
 	}
 }
 
-void add(uint8_t *m, uint8_t *k)
+void add(uint32_t *data, uint8_t *k)
 {
 	int i, n;
+	unsigned char *m=(unsigned char*)data;
+
 	for (i = 0; i < 32; i++)
 	{
 		n = (m[i] + k[r[i]]) % 256;
@@ -284,12 +411,14 @@ void sub(uint8_t *c, uint8_t *k)
 	}
 }
 
-void perm(uint8_t *m, uint8_t *r)
+void perm(uint32_t *data, uint8_t *r)
 {
 	uint8_t u[32];
+	unsigned char *m=(unsigned char*)data;
+
 	for (int i = 0; i < 32; i++)
 		u[i] = m[r[i]];
-	memcpy(m, u, 32);
+	memcpy(data, u, 32);
 }
 
 unsigned char mkbox(unsigned char x)
@@ -528,11 +657,12 @@ void milk(uint8_t vc[4][4])
 }
 
 uint8_t table[16][32];
-void dec(uint8_t *m, uint8_t *k, uint8_t *inv_ss)
+void dec(uint32_t *data, uint8_t *k, uint8_t *inv_ss)
 {
 	int i, l;
 	uint8_t mm[4][8], con[32];
-
+	
+	unsigned char *m=(unsigned char*)data;
 	//milk(der);
 	//inverseMatrix(der,snoot);
 	memcpy(r, out, 32);
@@ -543,37 +673,52 @@ void dec(uint8_t *m, uint8_t *k, uint8_t *inv_ss)
 	for (i = 0; i < 10; i++)
 	{
 		// printf("\n");
-		for(l=0;l<16;l++)
-		m[l]^=m[l+16];
-		perm(m, inv_r);
+		int tmp1=data[0];
+		int tmp2=data[1];
+		int tmp3=data[2];
+		int tmp4=data[3];
+		data[0]=data[4];
+		data[1]=data[5];
+		data[2]=data[6];
+		data[3]=data[7];
+		data[4]=tmp1;
+		data[5]=tmp2;
+		data[6]=tmp3;
+		data[7]=tmp4;
+		for(l=0;l<4;l++)
+		data[l]^=data[l+4];
+		//m=(unsigned char*)data;
+		perm(data, inv_r);
+		//memcpy(m,data,32);
 		//matmax(snoot, m, con);
-		memcpy(con,m,32);
-		inv_shift_rows(con);
-		for (int l = 0; l < 32; l++)
+		invMixColumns(data);
+		memcpy(con,data,32);
+		//inv_shift_rows(con);
+		for (int l = 0; l < 16; l++)
 		{
 			//if (l % 2 == 0)
 				con[l] = inv_ss[rotl(con[l],3)]; // inv_s_box[m[l]];
 		}
 		sub(con, table[9-i]);
-		memcpy(m,con,32);
+		memcpy(data,con,32);
 		reverse();
 	}
-	/*
+	
 	printf("Original message (after inv cipher):\n");
 	for (i = 0; i < 32; i++)
 	{
-		printf("%02x ", inv_s_box[s_box[m[i]]]);
+		printf("%02x ", inv_s_box[s_box[con[i]]]);
 	}
 	printf("\n");
-	*/
+	
 }
 
-int enc(uint8_t *k, uint8_t *m, uint8_t *ss)
+int enc(uint8_t *k, uint32_t *data, uint8_t *ss)
 {
-
 	int i, j;
 	uint8_t mm[4][8], con[32];
-
+	unsigned char *m=(unsigned char*)data;
+	
 	memcpy(r, out, 32);
 	//milk(der);
 	// exit(1);
@@ -581,27 +726,44 @@ int enc(uint8_t *k, uint8_t *m, uint8_t *ss)
 	{
 		// printf("\n");
 		rounder();
-		add(m, table[i]);
-		for (int l = 0; l < 32; l++)
+		add(data, table[i]);
+		memcpy(m,data,32);
+		for (int l = 0; l < 16; l++)
 		{
 			//if (l % 2 == 0)
 				m[l] = rotl(ss[m[l]],-3); // s_box[m[l]];
 		}
-		shift_rows(m);
+		memcpy(data,m,32);
+		//shift_rows(m);
+		MixColumns(data);
 		//matmax(der, m, con);
-		perm(m, r);
-		for(j=0;j<16;j++)
-		m[j]^=m[j+16];
+		//memcpy(data,con,32);
+		perm(data, r);
+		for(j=0;j<4;j++)
+		data[j]^=data[j+4];
+		int tmp1=data[0];
+		int tmp2=data[1];
+		int tmp3=data[2];
+		int tmp4=data[3];
+		data[0]=data[4];
+		data[1]=data[5];
+		data[2]=data[6];
+		data[3]=data[7];
+		data[4]=tmp1;
+		data[5]=tmp2;
+		data[6]=tmp3;
+		data[7]=tmp4;
 		//memcpy(m,con,32);
 	}
-	/*
+	memcpy(m,data,32);
+	
 	printf("Ciphered message:\n");
 	for (i = 0; i < 32; i++)
 	{
 		printf("%02x ", m[i]);
 	}
 	printf("\n");
-	*/
+	
 }
 
 void main()
@@ -659,10 +821,10 @@ void main()
 	i=0;
 	
 
-
-	while(i<1000000){
-	enc(k, m, ss);
-	dec(m, k, inv_ss);
+	memcpy(data,m,32);
+	while(i<1){
+	enc(k, data, ss);
+	dec(data, k, inv_ss);
 	i++;
 	}
 }
