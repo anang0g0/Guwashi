@@ -704,14 +704,14 @@ void dec(uint32_t *data, uint8_t *k, uint8_t *inv_ss)
 		memcpy(data,con,32);
 		reverse();
 	}
-	
+	/*
 	printf("Original message (after inv cipher):\n");
 	for (i = 0; i < 32; i++)
 	{
 		printf("%02x ", con[i]);
 	}
 	printf("\n");
-	
+	*/
 }
 
 int enc(uint8_t *k, uint32_t *data, uint8_t *ss)
@@ -759,14 +759,14 @@ int enc(uint8_t *k, uint32_t *data, uint8_t *ss)
 		//memcpy(m,con,32);
 	}
 	memcpy(m,data,32);
-	
+	/*
 	printf("Ciphered message:\n");
 	for (i = 0; i < 32; i++)
 	{
 		printf("%02x ", m[i]);
 	}
 	printf("\n");
-	
+	*/
 }
 
 void main()
