@@ -691,9 +691,9 @@ void dec(uint32_t *data, uint8_t *k, uint8_t *inv_ss)
 		//m=(unsigned char*)data;
 		perm(data, inv_r);
 		memcpy(m,data,32);
-		//matmax(snoot, m, con);
-		invMixColumns(data);
-		memcpy(con,data,32);
+		matmax(snoot, m, con);
+		//invMixColumns(data);
+		//memcpy(con,data,32);
 		//inv_shift_rows(con);
 		for (int l = 0; l < 16; l++)
 		{
@@ -704,14 +704,14 @@ void dec(uint32_t *data, uint8_t *k, uint8_t *inv_ss)
 		memcpy(data,con,32);
 		reverse();
 	}
-	/*
+	
 	printf("Original message (after inv cipher):\n");
 	for (i = 0; i < 32; i++)
 	{
 		printf("%02x ", con[i]);
 	}
 	printf("\n");
-	*/
+	
 }
 
 int enc(uint8_t *k, uint32_t *data, uint8_t *ss)
@@ -738,9 +738,9 @@ int enc(uint8_t *k, uint32_t *data, uint8_t *ss)
 		}
 		memcpy(data,m,32);
 		//shift_rows(m);
-		MixColumns(data);
-		//matmax(der, m, con);
-		//memcpy(data,con,32);
+		//MixColumns(data);
+		matmax(der, m, con);
+		memcpy(data,con,32);
 		perm(data, r);
 		for(j=0;j<4;j++)
 		data[j]^=data[j+4];
@@ -759,14 +759,14 @@ int enc(uint8_t *k, uint32_t *data, uint8_t *ss)
 		//memcpy(m,con,32);
 	}
 	memcpy(m,data,32);
-	/*
+	
 	printf("Ciphered message:\n");
 	for (i = 0; i < 32; i++)
 	{
 		printf("%02x ", m[i]);
 	}
 	printf("\n");
-	*/
+	
 }
 
 void main()
@@ -804,13 +804,20 @@ void main()
 	uint8_t ss[256], inv_ss[256];
 	for (i = 0; i < 256; i++){
 		ss[i] = mkbox(i);
+		printf("%d,",ss[i]);
 		if(ss[i]>255){
 		printf("%d %d vaka\n",i,ss[i]);
 		exit(1);
 		}
 	}
+	printf("\n");
+	//exit(1);
 	for (i = 0; i < 256; i++)
 		inv_ss[ss[i]] = i;
+	for(i=0;i<256;i++)
+	printf("%d,",inv_ss[i]);
+	printf("\n");
+	//exit(1);
 	//memcpy(r,out,32);
 
 	//Expand Key
