@@ -41,4 +41,4 @@ expand-key:2つの置換の共役を取り、鍵自身にGF(2)上の演算をし
 $\tau^{i+1}=\pi^{i-1}\tau^{i}\pi^{i-1}、　key[i]\oplus=key[\tau[i]]$
 
 addkey:256を法とする10進加法
-$m[i]=(m[i]+key[i])%256$
+$m[i]=(m[i]+key[i])％256$
