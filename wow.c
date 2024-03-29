@@ -395,7 +395,7 @@ void add(uint32_t *data, uint8_t *k)
 
 	for (i = 0; i < 32; i++)
 	{
-		n = (m[i] + k[r[i]]) % 256;
+		n = (m[i] + k[i]) % 256;
 		// m[i]=s_box[((n % 16) + (n >> 4) * 16)];
 		m[i] = n;
 	}
@@ -408,7 +408,7 @@ void sub(uint8_t *c, uint8_t *k)
 	{
 		//c[i] = c[i];
 		// c[i]=inv_s_box[((n % 16) + (n >> 4) * 16)];
-		c[i] = (256 + c[i] - k[r[i]]) % 256;
+		c[i] = (256 + c[i] - k[i]) % 256;
 	}
 }
 
@@ -826,13 +826,13 @@ void main()
 	
 
 	memcpy(data,m,32);
-	while(i<1){
+	while(i<8){
 		for(int j=0;j<32;j++)
 		m[j]=j+i*32;
 	printf("Plaintext message:\n");
-	for (i = 0; i < 32; i++)
+	for (int l = 0; l < 32; l++)
 	{
-		printf("%02x ", m[i]);
+		printf("%02x ", m[l]);
 	}
 	printf("\n");
 
