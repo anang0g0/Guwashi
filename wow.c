@@ -525,6 +525,19 @@ int mltn(int n, int x)
 	return ret;
 }
 
+int lpn(int n, int x)
+{
+	int ret = 1;
+	while (n > 0)
+	{
+		if (n & 1)
+			ret = ret*x%257; //mlt(ret, x); // n の最下位bitが 1 ならば x^(2^i) をかける
+		x = x*x%257; //mlt(x, x);
+		n >>= 1; // n を1bit 左にずらす
+	}
+	return ret;
+}
+
 void mds(int kk)
 {
 	int i, j;
@@ -538,7 +551,27 @@ void mds(int kk)
 	{
 		for (j = 2; j < 6; j++)
 		{
-			vb[i][j] = gf[mltn(i, fg[j])];
+			vb[i][j] = mltn(i,j); //gf[mltn(i, fg[j])];
+			printf("%d,", vb[i][j]);
+		}
+		printf("\n");
+	}
+}
+
+void mdsp(int kk)
+{
+	int i, j;
+
+	printf("van der\n");
+
+	for (i = 2; i < 5; i++)
+		vb[0][i] = 1;
+	// #pragma omp parallel for private(i, j)
+	for (i = 1; i < 6; i++)
+	{
+		for (j = 2; j < 6; j++)
+		{
+			vb[i][j] = lpn(i,j); //gf[mltn(i, fg[j])];
 			printf("%d,", vb[i][j]);
 		}
 		printf("\n");
@@ -574,6 +607,43 @@ void matmax(uint8_t *g, uint8_t *h, uint8_t *c)
 		// printf("\n");
 	}
 	// printf("\n");
+}
+void matmax3(uint8_t g[4][4], uint8_t h[4][4], uint8_t c[4][4])
+{
+	int i, j, k;
+	// GH=0であることの確認。
+	for (i = 0; i < 4; i++)
+	{
+		for (j = 0; j < 4; j++)
+		{
+			c[i][j] = 0;
+			for (k = 0; k < 4; k++){
+				c[i][j] ^= gf[mlt(fg[g[i][k]], fg[h[k][j]])];
+				}
+			 printf("c%d,", c[i][j]);
+		}
+		 printf("\n");
+	}
+	 printf("\n");
+}
+
+void matmax2(uint16_t g[4][4], uint16_t h[4][4], uint16_t c[4][4])
+{
+	int i, j, k;
+	// GH=0であることの確認。
+	for (i = 0; i < 4; i++)
+	{
+		for (j = 0; j < 4; j++)
+		{
+			c[i][j] = 0;
+			for (k = 0; k < 4; k++){
+				c[i][j] = (c[i][j]+g[i][k]*h[k][j])%257;
+				}
+			 printf("c%d,", c[i][j]);
+		}
+		 printf("\n");
+	}
+	 printf("\n");
 }
 
 
@@ -633,6 +703,52 @@ void inverseMatrix(uint8_t A[MATRIX_SIZE][MATRIX_SIZE], uint8_t A_inv[MATRIX_SIZ
 	}
 	printf("\n");
 }
+// 行列の逆行列を計算する関数
+void inverseP(uint16_t A[MATRIX_SIZE][MATRIX_SIZE], uint16_t A_inv[MATRIX_SIZE][MATRIX_SIZE])
+{
+	int i, j, k;
+	uint16_t temp;
+
+	// 単位行列を初期化
+	for (i = 0; i < MATRIX_SIZE; i++)
+	{
+		for (j = 0; j < MATRIX_SIZE; j++)
+		{
+			A_inv[i][j] = (i == j) ? 1 : 0;
+		}
+	}
+
+	// ガウス・ジョルダン法による逆行列の計算
+	for (k = 0; k < MATRIX_SIZE; k++)
+	{
+		temp = inv(A[k][k],257);
+		for (j = 0; j < MATRIX_SIZE; j++)
+		{
+			A[k][j] = A[k][j]*temp%257;
+			A_inv[k][j] = A_inv[k][j]*(temp)%257;
+		}
+		for (i = 0; i < MATRIX_SIZE; i++)
+		{
+			if (i != k)
+			{
+				temp = A[i][k];
+				for (j = 0; j < MATRIX_SIZE; j++)
+				{
+					A[i][j] = (A[i][j]+A[k][j]*temp)%257;
+					A_inv[i][j] = (A_inv[i][j]+A_inv[k][j]*temp)%257;
+				}
+			}
+		}
+	}
+
+	for (i = 0; i < MATRIX_SIZE; i++)
+	{
+		for (j = 0; j < MATRIX_SIZE; j++)
+			printf("%d,", A[i][j]);
+		printf("\n");
+	}
+	printf("\n");
+}
 
 
 void milk(uint8_t vc[4][4])
@@ -662,7 +778,7 @@ void dec(uint32_t *data, uint8_t *k, uint8_t *inv_ss)
 {
 	int i, l;
 	uint8_t mm[4][8], con[32]={0};
-	
+
 	unsigned char *m=(unsigned char*)data;
 	//milk(der);
 	//inverseMatrix(der,snoot);
@@ -775,6 +891,11 @@ void main()
 	unsigned char m[32];
 	unsigned char k[32] = {0};
 	unsigned char s[32], nonce[32] = {103, 198, 105, 115, 81, 255, 74, 236, 41, 205, 186, 171, 242, 251, 227, 70, 124, 194, 84, 248, 27, 232, 231, 141, 118, 90, 46, 99, 51, 159, 201, 154};
+	uint16_t A[4][4]={{2,3,4,5},{4,9,16,25},{8,27,64,125},{16,81,256,111}},inv_A[4][4]={{5,146,1,107},{79,92,41,43},{68,221,194,32},{102,18,231,60}},cc[4][4]={0};
+//[  5 146   1 107]
+//[ 79  92  41  43]
+//[ 68 221 194  32]
+//[102  18 231  60]
 
 	for (i = 0; i < 32; i++)
 	{
@@ -787,8 +908,21 @@ void main()
 	}
 	//uint8_t out[32]; //, mo[256], inv_mo[256];
 	uint8_t mm[4][8] = {0}, con[8][8] = {0};
-
-	// mds(4);
+	 mdsp(4);
+	 //inverseP(A,inv_A); //<- doubt
+	 for(i=0;i<4;i++){
+		for(int j=0;j<4;j++)
+		printf("i%d,",inv_A[i][j]);
+		printf("\n");
+	 }
+	 printf("\n");
+	 for(i=0;i<4;i++){
+		for(int j=0;j<4;j++)
+		printf("A%d,",A[i][j]);
+		printf("\n");
+	 }
+	 printf("\n");
+	 matmax2(A,inv_A,cc);
 	// exit(1);
 	random_shuffle(p, 32);
 	random_shuffle(r, 32);
