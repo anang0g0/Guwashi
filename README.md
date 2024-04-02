@@ -12,6 +12,9 @@ https://arxiv.org/pdf/1204.2310.pdf
 
 https://ja.wikipedia.org/wiki/%E6%BA%96%E7%BE%A4
 
+ラテン方陣って結局ただの置換群だった。
+じゃあ置換群でない準群ってあるの？
+
 # 20240329
 現在強度の計算中。
 
