@@ -10,6 +10,8 @@ SNSは自分の主義主張を書くところではないとの指摘。
 
 https://arxiv.org/pdf/1204.2310.pdf
 
+https://ja.wikipedia.org/wiki/%E6%BA%96%E7%BE%A4
+
 # 20240329
 現在強度の計算中。
 
