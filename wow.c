@@ -698,7 +698,10 @@ void matmaxp2(const uint16_t *g,const uint16_t *h, uint32_t *c)
 		{
 			c[i*4+j] = 0;
 			for (k = 0; k < 4; k++){
-				c[i*4+j] = (c[i*4+j]+g[i*4+k]*h[k*4+j])%65537;
+			int l=h[k*4+j];
+				if(l==0)
+				l=65536;
+				c[i*4+j] = (c[i*4+j]+g[i*4+k]*l)%65537;
 				if(c[i*4+j]==65536){
 				c[i*4+j]=0;
 				printf("Uh!\n");
