@@ -14,6 +14,9 @@ static const uint8_t s_box[256] = {1,2,9,28,65,126,217,87,0,216,230,47,187,142,1
 static const uint8_t inv_s_box[256] = {8,0,1,249,147,64,210,109,40,2,21,119,140,156,100,194,30,241,223,89,171,76,226,165,95,37,153,228,3,247,52,17,118,128,20,15,176,59,154,174,51,163,251,248,224,222,41,11,91,218,58,61,142,232,164,233,102,80,208,98,133,121,143,84,69,4,183,97,211,137,87,134,245,42,67,53,132,150,203,106,239,238,184,48,243,72,56,7,191,23,62,186,145,169,127,43,187,55,105,50,113,26,77,149,82,200,172,230,28,192,167,212,22,131,79,135,161,244,44,221,182,60,68,141,146,99,5,219,179,225,32,78,38,252,158,111,116,189,197,75,36,213,13,96,122,178,126,235,45,90,65,229,27,85,57,175,108,180,231,144,207,152,202,70,214,130,88,112,71,195,234,66,250,201,185,14,209,73,19,18,151,54,107,125,204,190,215,12,123,170,120,46,160,74,253,188,173,114,136,124,159,49,177,155,24,93,25,115,196,199,39,166,246,216,35,33,9,6,94,206,83,103,198,81,242,237,129,139,240,205,10,254,29,104,220,162,92,31,181,86,168,34,16,227,63,157,101,117,138,236,255,217,148,47,193,110};
 static const uint8_t A[16]={1,(0),(171),(154),(87),(1),(0),(171),(104),(87),(1),(0),(147),(104),(87),(1)};
 static const uint8_t inv_A[16]={60,18,253,18,225,110,166,253,142,123,110,18,144,142,225,60},cc[32]={0};
+static const unsigned short aa[16]={2,3,4,5,4,9,16,25,8,27,64,125,16,81,256,625};
+unsigned short inv_a[16]={5, 38226 ,1, 27307,21839, 21852, 10921, 10923,16388, 57341, 49154,  8192,26214,  4370, 58983, 15292};
+
 //[ 60  18 253  18]
 //[225 110 166 253]
 //[142 123 110  18]
@@ -39,7 +42,7 @@ uint64_t seki(uint64_t a, uint64_t b)
 	return c;
 }
 
-uint16_t inv(uint16_t a, uint16_t n)
+uint16_t inv(uint16_t a, uint32_t n)
 {
 	uint16_t d = n;
 	uint16_t x = 0;
@@ -546,8 +549,8 @@ int lpn(int n, int x)
 	while (n > 0)
 	{
 		if (n & 1)
-			ret = ret*x%257; //mlt(ret, x); // n の最下位bitが 1 ならば x^(2^i) をかける
-		x = x*x%257; //mlt(x, x);
+			ret = ret*x%65537; //mlt(ret, x); // n の最下位bitが 1 ならば x^(2^i) をかける
+		x = x*x%65537; //mlt(x, x);
 		n >>= 1; // n を1bit 左にずらす
 	}
 	return ret;
@@ -642,9 +645,11 @@ void matmax3(uint8_t g[4][4], uint8_t h[4][4], uint8_t c[4][4])
 	 printf("\n");
 }
 
-void matmaxp(uint8_t *g, uint8_t *h, uint8_t *c)
+void matmaxp(const uint8_t *g, uint8_t *h, uint16_t *c)
 {
 	int i, j, k;
+	//uint8_t *a=(uint8_t*)h;
+	
 	// GH=0であることの確認。
 	for (i = 0; i < 4; i++)
 	{
@@ -653,6 +658,27 @@ void matmaxp(uint8_t *g, uint8_t *h, uint8_t *c)
 			c[i*8+j] = 0;
 			for (k = 0; k < 4; k++){
 				c[i*8+j] = (c[i*8+j]+g[i*4+k]*h[k*8+j])%257;
+			}
+			if(c[i*8+j]>255)
+			 printf("Cx%d,", c[i*8+j]);
+		}
+		 //printf("\n");
+	}
+	 printf("\n");
+}
+
+void matmaxpp(const uint8_t *g,const uint8_t *h, uint16_t *c)
+{
+	int i, j, k;
+	//uint8_t *a=(uint8_t*)h;
+	// GH=0であることの確認。
+	for (i = 0; i < 4; i++)
+	{
+		for (j = 0; j < 4; j++)
+		{
+			c[i*4+j] = 0;
+			for (k = 0; k < 4; k++){
+				c[i*4+j] = (c[i*4+j]+g[i*4+k]*h[k*4+j])%257;
 				}
 			// printf("c%d,", c[i*8+j]);
 		}
@@ -661,6 +687,30 @@ void matmaxp(uint8_t *g, uint8_t *h, uint8_t *c)
 	// printf("\n");
 }
 
+void matmaxp2(const uint16_t *g,const uint16_t *h, uint32_t *c)
+{
+	int i, j, k;
+	//uint8_t *a=(uint8_t*)h;
+	// GH=0であることの確認。
+	for (i = 0; i < 4; i++)
+	{
+		for (j = 0; j < 4; j++)
+		{
+			c[i*4+j] = 0;
+			for (k = 0; k < 4; k++){
+				c[i*4+j] = (c[i*4+j]+g[i*4+k]*h[k*4+j])%65537;
+				if(c[i*4+j]==65536){
+				c[i*4+j]=0;
+				printf("Uh!\n");
+				exit(1);
+				}
+				}
+			// printf("c%d,", c[i*8+j]);
+		}
+		// printf("\n");
+	}
+	// printf("\n");
+}
 
 int oinv(unsigned short b)
 {
@@ -719,7 +769,7 @@ void inverseMatrix(uint8_t A[MATRIX_SIZE][MATRIX_SIZE], uint8_t A_inv[MATRIX_SIZ
 	printf("\n");
 }
 // 行列の逆行列を計算する関数
-void inverseP(uint16_t A[MATRIX_SIZE][MATRIX_SIZE], uint16_t A_inv[MATRIX_SIZE][MATRIX_SIZE])
+void inverseP(uint16_t A[MATRIX_SIZE][MATRIX_SIZE], uint32_t A_inv[MATRIX_SIZE][MATRIX_SIZE])
 {
 	int i, j, k;
 	uint16_t temp;
@@ -736,11 +786,11 @@ void inverseP(uint16_t A[MATRIX_SIZE][MATRIX_SIZE], uint16_t A_inv[MATRIX_SIZE][
 	// ガウス・ジョルダン法による逆行列の計算
 	for (k = 0; k < MATRIX_SIZE; k++)
 	{
-		temp = inv(A[k][k],257);
+		temp = inv(A[k][k],65537);
 		for (j = 0; j < MATRIX_SIZE; j++)
 		{
-			A[k][j] = A[k][j]*temp%257;
-			A_inv[k][j] = A_inv[k][j]*(temp)%257;
+			A[k][j] = A[k][j]*temp%65537;
+			A_inv[k][j] = A_inv[k][j]*(temp)%65537;
 		}
 		for (i = 0; i < MATRIX_SIZE; i++)
 		{
@@ -749,8 +799,8 @@ void inverseP(uint16_t A[MATRIX_SIZE][MATRIX_SIZE], uint16_t A_inv[MATRIX_SIZE][
 				temp = A[i][k];
 				for (j = 0; j < MATRIX_SIZE; j++)
 				{
-					A[i][j] = (A[i][j]+A[k][j]*temp)%257;
-					A_inv[i][j] = (A_inv[i][j]+A_inv[k][j]*temp)%257;
+					A[i][j] = (A[i][j]+A[k][j]*temp)%65537;
+					A_inv[i][j] = (A_inv[i][j]+A_inv[k][j]*temp)%65537;
 				}
 			}
 		}
@@ -793,6 +843,8 @@ void dec(uint32_t *data, uint8_t *k)
 {
 	int i, l;
 	uint8_t mm[4][8], con[32]={0};
+	uint16_t u[16]={0};
+	uint32_t kon[16]={0};
 
 	unsigned char *m=(unsigned char*)data;
 	//milk(der);
@@ -821,10 +873,18 @@ void dec(uint32_t *data, uint8_t *k)
 		data[l]^=data[l+4];
 		//m=(unsigned char*)data;
 		perm(data, inv_r);
-		//memcpy(m,data,32);
-		//matmaxp(inv_A, m, con);
+		memcpy(u,data,32);
+		matmaxp2(inv_a, u, kon);
+		for(int x=0;x<16;x++)
+		{
+			//printf("%d,",kon[x]);
+			u[x]=kon[x];
+		}
+		//printf("\n");
+		//memcpy(data,con,32);
 		//matmax(snoot,m,con);
-		invMixColumns(data);
+		memcpy(data,u,32);
+		//invMixColumns(data);
 		for(int l=0;l<4;l++)
 		data[l]=rotl2(data[l],25);
 		memcpy(con,data,32);
@@ -852,7 +912,9 @@ int enc(uint8_t *k, uint32_t *data)
 {
 	int i, j;
 	uint8_t mm[4][8], con[32];
+	uint32_t kon[16];
 	unsigned char *m=(unsigned char*)data;
+	uint16_t u[16];
 	
 	memcpy(r, out, 32);
 	//milk(der);
@@ -876,10 +938,17 @@ int enc(uint8_t *k, uint32_t *data)
 		for(int l=0;l<4;l++)
 		data[l]=rotl2(data[l],-25);
 		//shift_rows(m);
-		MixColumns(data);
-		//matmaxp(A, m, con);
+		//MixColumns(data);
+		memcpy(u,data,32);
+		matmaxp2(aa, u, kon);
 		//matmax(der,m,con);
-		//memcpy(data,con,32);
+		for(int x=0;x<16;x++){
+		//printf("%d,",kon[x]);
+		u[x]=kon[x];
+		}
+		//printf("\n");
+		//exit(1);
+		memcpy(data,u,32);
 		perm(data, r);
 		for(j=0;j<4;j++)
 		data[j]^=data[j+4];
@@ -910,15 +979,36 @@ int enc(uint8_t *k, uint32_t *data)
 
 void main()
 {
-	unsigned int i;
+	unsigned int i,j;
 	unsigned char m[32];
 	unsigned char k[32] = {0};
 	unsigned char s[32], nonce[32] = {103, 198, 105, 115, 81, 255, 74, 236, 41, 205, 186, 171, 242, 251, 227, 70, 124, 194, 84, 248, 27, 232, 231, 141, 118, 90, 46, 99, 51, 159, 201, 154};
-
+	uint16_t kk[16];
 //[  5 146   1 107]
 //[ 79  92  41  43]
 //[ 68 221 194  32]
 //[102  18 231  60]
+
+
+unsigned int unko[16]={0};
+mdsp(6);
+//inverseP(aa,inv_a);
+matmaxp2(aa,inv_a,unko);
+for(i=0;i<4;i++){
+	for(j=0;j<4;j++)
+	printf("%d,",unko[i*4+j]);
+	printf("\n");
+}
+printf("\n");
+//exit(1);
+
+matmaxpp(A,inv_A,kk);
+for(i=0;i<4;i++){
+	for(j=0;j<4;j++)
+printf("%d,",kk[i*4+j]);
+printf("\n");
+}
+//exit(1);
 
 	for (i = 0; i < 32; i++)
 	{
