@@ -705,7 +705,7 @@ void matmaxp2(const uint16_t *g,const uint16_t *h, uint32_t *c)
 				if(c[i*4+j]==65536){
 				c[i*4+j]=0;
 				printf("Uh!\n");
-				exit(1);
+				//exit(1);
 				}
 				}
 			// printf("c%d,", c[i*8+j]);
@@ -911,6 +911,7 @@ void dec(uint32_t *data, uint8_t *k)
 	
 }
 
+FILE *fp;
 int enc(uint8_t *k, uint32_t *data)
 {
 	int i, j;
@@ -970,7 +971,7 @@ int enc(uint8_t *k, uint32_t *data)
 		//memcpy(m,con,32);
 	}
 	memcpy(m,data,32);
-	
+	//fwrite(m,1,32,fp);	
 	printf("Ciphered message:\n");
 	for (i = 0; i < 32; i++)
 	{
@@ -979,7 +980,6 @@ int enc(uint8_t *k, uint32_t *data)
 	printf("\n");
 	
 }
-
 
 
 void main()
@@ -995,7 +995,7 @@ void main()
 //[ 68 221 194  32]
 //[102  18 231  60]
 
-
+srand(clock());
 unsigned int unko[16]={0};
 mdsp(6);
 //inverseP(aa,inv_a);
@@ -1086,23 +1086,23 @@ printf("\n");
 	//Expand Key
 	for (i = 0; i < 16; i++)
 	{
-		for(i=0;i<32;i++)
+		for(j=0;j<32;j++)
 		inv_r[i]=p[r[inv_p[i]]];
 		memcpy(r,inv_r,32);
 		for (int j = 0; j < 32; j++)
-			k[j] ^= rotl(k[r[j]], i%8);
+			k[j] ^= rotl(k[r[j]], 3);
 		rounder();
 		for (int j = 0; j < 32; j++)
 			table[i][j] = k[j];
 	}
 	i=0;
 	
-
+	//fp=fopen("111","wb");
 	memcpy(data,m,32);
-	while(i<8){
-	
-		for(int j=0;j<32;j++)
-		m[j]=j+i*32;
+
+	while(i<16){
+	for(int j=0;j<32;j++)
+	m[j]=j+i*32;	
 	printf("Plaintext message:\n");
 	for (int l = 0; l < 32; l++)
 	{
@@ -1113,7 +1113,9 @@ printf("\n");
 	memcpy(data,m,32);
 	
 	enc(k, data);
+	//memcpy(m,data,32);
 	dec(data, k);
 	i++;
 	}
+	//fclose(fp);
 }
